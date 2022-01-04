@@ -1,0 +1,100 @@
+---
+title: "My Project"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+library(lattice);
+library(ggplot2);
+library(caret);
+library(randomForest);
+library(rpart);
+library(rpart.plot);
+library(RColorBrewer)
+library(rattle)
+#There were differnet packages installed such as randomForest, and caret. Pseudo random #generator seed was set at 1234
+
+
+set.seed(1234)
+
+# Obtaining data
+
+trainingset <- read.csv("/Users/tomaszosuchowski/pml-training.csv", na.strings = c("NA", "#DIV/0!", ""))
+testingset <- read.csv("/Users/tomaszosuchowski/pml-testing.csv", na.strings = c("NA", "#DIV/0!", ""))
+
+```
+
+Perform exploratory analysis
+
+```{r}
+dim(trainingset);
+dim(testingset);
+
+#head (trainingset);
+
+
+# Delete unnecessary values
+
+trainingset <-trainingset[,-c(1:7)]
+trainingset <- trainingset[, colSums(is.na(trainingset))==0]
+testingset <- testingset[, colSums(is.na(testingset))==0]
+testingset <-testingset[,-c(1:7)]
+# Data partition to 75% training and 25% testing
+
+
+inTrain <- createDataPartition( y = trainingset$classe, p=0.75, list = FALSE)
+myTraining <-trainingset[inTrain,];
+myTesting <-trainingset[-inTrain,];
+dim(myTraining);
+dim(myTesting);
+
+# The outcome variable classe  contains  five levels: A,B,C,D and E. A plot will visualize the frequency of each level in the TrainTrainingSet . Level A corresponds to specified execution of the excercise where other levels perform common mistakes. 
+
+plot(myTraining$classe, col="green", main="Plot of variable levels with the TrainTrainingSet", xlab="classe", ylab="Frequency")
+```
+Based on the graph above, we can see each frequency  is in magnitude order. Level A is the most and level D is the least frequent.
+
+**Prediction model - Decision Tree**
+
+```{r}
+
+model1 <- rpart(classe ~., data= myTraining, method="class")
+prediction1 <-predict(model1, myTesting, type="class")
+
+
+# Plot the Decision Tree
+rpart.plot(model1, main="classification Tree", extra= 108, under=TRUE, faclen=0)
+
+```
+Test results on our myTesting
+
+```{r}
+confusionMatrix(prediction1, myTesting$classe)
+
+```
+**Prediction model**
+
+
+```{r}
+
+prediction1 <-predict(model1, myTesting, type="class")
+
+```
+
+**Confusion Matrix to test results:**
+
+```{r}
+confusionMatrix(prediction1, myTesting$classe)
+```
+**Random Forest**
+```{r}
+ rf <- randomForest(classe ~. , data=myTraining)
+predicionsB1 <- predict(rf, myTesting, type= "class")
+confusionMatrix(predicionsB1, myTesting$classe)
+```
